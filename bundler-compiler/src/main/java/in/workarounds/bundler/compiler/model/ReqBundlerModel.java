@@ -34,6 +34,9 @@ public class ReqBundlerModel {
 
     private List<StateModel> states;
     private List<ArgModel> args;
+    private String data;
+    private int flags;
+    private String action;
 
     public ReqBundlerModel(Element element, Provider provider) {
         init(element, provider);
@@ -72,6 +75,9 @@ public class ReqBundlerModel {
         RequireBundler annotation = element.getAnnotation(RequireBundler.class);
         this.bundlerMethodName = annotation.bundlerMethod();
         this.requireAll = annotation.requireAll();
+        this.data = annotation.data();
+        this.flags = annotation.flags();
+        this.action = annotation.action();
 
         variety = getVariety((TypeElement) element, provider.typeUtils());
         String qualifiedName = ((TypeElement) element).getQualifiedName().toString();
@@ -203,6 +209,18 @@ public class ReqBundlerModel {
 
     public ClassName getClassName() {
         return className;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public int getFlags() {
+        return flags;
+    }
+
+    public String getAction() {
+        return action;
     }
 
     public enum VARIETY {

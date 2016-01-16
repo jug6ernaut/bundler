@@ -97,16 +97,28 @@ public class BuilderGenerator {
     }
 
     private MethodSpec intentMethod() {
-        return MethodSpec.methodBuilder(MethodName.intent)
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(MethodName.intent)
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassProvider.context, VarName.context)
                 .returns(ClassProvider.intent)
                 .addStatement("$T $L = new $T($L, $T.class)",
                         ClassProvider.intent, VarName.intent, ClassProvider.intent,
                         VarName.context, model.getClassName())
-                .addStatement("$L.putExtras($L())", VarName.intent, MethodName.bundle)
-                .addStatement("return $L", VarName.intent)
-                .build();
+                .addStatement("$L.putExtras($L())", VarName.intent, MethodName.bundle);
+
+        if(model.getAction().length() > 0) {
+            builder.addStatement("$L.setAction(\"$L\")", VarName.intent, model.getAction());
+        }
+        if(model.getFlags() != -1) {
+            builder.addStatement("$L.setFlags($L)", VarName.intent, model.getFlags());
+        }
+        if(model.getData().length() > 0) {
+            builder.addStatement("$L.setData(android.net.Uri.parse(\"$L\"))", VarName.intent, model.getData());
+        }
+
+        builder.addStatement("return $L", VarName.intent);
+
+        return builder.build();
     }
 
     private MethodSpec startMethod(String methodName) {
