@@ -3,6 +3,7 @@ package in.workarounds.bundler.compiler.model;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,19 +26,23 @@ public class ArgModel extends AnnotatedField {
     private Required required;
     private boolean requireAll;
 
-    public ArgModel(Element element, Provider provider, boolean requireAll) {
-        super(element, provider, Arg.class);
+    public ArgModel(Element element, Provider provider, boolean requireAll, boolean isField, String name, TypeName type) {
+        super(element, provider, Arg.class, isField, name, type);
         this.element = element;
         this.requireAll = requireAll;
 
         supportAnnotations = new ArrayList<>();
         for(AnnotationMirror annotationMirror: element.getAnnotationMirrors()) {
-           if(Utils.isSupportAnnotation(annotationMirror)) {
-               supportAnnotations.add(AnnotationSpec.get(annotationMirror));
-           }
+            if(Utils.isSupportAnnotation(annotationMirror)) {
+                supportAnnotations.add(AnnotationSpec.get(annotationMirror));
+            }
         }
 
         required = element.getAnnotation(Required.class);
+    }
+
+    public ArgModel(Element element, Provider provider, boolean requireAll, boolean isField) {
+        this(element, provider, requireAll, isField, element.getSimpleName().toString(),TypeName.get(element.asType()));
     }
 
     public boolean isRequired() {

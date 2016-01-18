@@ -11,7 +11,7 @@ import in.workarounds.bundler.compiler.Provider;
 public class StateModel extends AnnotatedField {
 
     public StateModel(Element element, Provider provider) {
-        super(element, provider, State.class);
+        super(element, provider, State.class, true);
     }
 
 }

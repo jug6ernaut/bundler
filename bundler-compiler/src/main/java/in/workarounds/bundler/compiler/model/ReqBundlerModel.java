@@ -1,6 +1,7 @@
 package in.workarounds.bundler.compiler.model;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,14 +9,19 @@ import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
 import in.workarounds.bundler.annotations.Arg;
+import in.workarounds.bundler.annotations.Args;
 import in.workarounds.bundler.annotations.RequireBundler;
 import in.workarounds.bundler.annotations.State;
 import in.workarounds.bundler.compiler.Provider;
+import in.workarounds.bundler.compiler.util.Utils;
+
+import static javax.lang.model.element.ElementKind.FIELD;
 
 /**
  * Created by madki on 16/10/15.
@@ -125,11 +131,32 @@ public class ReqBundlerModel {
 
     private List<ArgModel> retrieveArgs(Element element, Provider provider) {
         List<ArgModel> tempArgs = new ArrayList<>();
+
+        // Field level Args
+        if(element.getAnnotation(Args.class) != null) {
+          for(Arg arg : element.getAnnotation(Args.class).value()) {
+            String name = arg.key();
+            TypeName typeName = Utils.getTypeName(arg);
+
+            ArgModel argModel = new ArgModel(element, provider, requireAll(), false, name, typeName);
+            tempArgs.add(argModel);
+          }
+        }
+
         for (Element enclosedElement : element.getEnclosedElements()) {
             Arg arg = enclosedElement.getAnnotation(Arg.class);
 
             if (arg != null) {
-                ArgModel argModel = new ArgModel(enclosedElement, provider, requireAll());
+                boolean isField = enclosedElement.getKind() == FIELD;
+                ArgModel argModel;
+                if(!isField) {
+                  String name = arg.key();
+                  TypeName typeName = Utils.getTypeName(arg);
+
+                  argModel = new ArgModel(enclosedElement, provider, requireAll(), isField, name, typeName);
+                } else {
+                  argModel = new ArgModel(enclosedElement, provider, requireAll(), isField);
+                }
                 tempArgs.add(argModel);
             }
         }

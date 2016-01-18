@@ -11,6 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 
 import in.workarounds.Bundler;
 import in.workarounds.bundler.annotations.Arg;
+import in.workarounds.bundler.annotations.Args;
 import in.workarounds.bundler.annotations.RequireBundler;
 import in.workarounds.bundler.annotations.Required;
 import in.workarounds.bundler.annotations.State;
@@ -19,7 +20,11 @@ import in.workarounds.bundler.annotations.State;
  * Created by madki on 29/10/15.
  */
 @RequireBundler(inheritArgs = false)
-public class BookDetailActivity extends BaseActivity {
+@Args({
+    @Arg(key = "wat", type = String.class),
+    @Arg(key = "wat2", type = String.class)
+})
+public final class BookDetailActivity extends BaseActivity {
     private static final String TAG = "BookDetailActivity";
     public static final int BOOK_TYPE_FICTION = 1;
     public static final int BOOK_TYPE_NON_FICTION = 2;

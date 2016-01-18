@@ -64,14 +64,16 @@ public class ParserGenerator {
             builder.addMethod(hasMethod(model, arg));
             builder.addMethod(getterMethod(model, arg));
 
-            intoBuilder.beginControlFlow("if($L())", hasMethod);
-            if (type.isPrimitive()) {
-                intoBuilder.addStatement("$L.$L = $L($L.$L)", VarName.from(model), label,
+            if(arg.isField()) {
+                intoBuilder.beginControlFlow("if($L())", hasMethod);
+                if (type.isPrimitive()) {
+                    intoBuilder.addStatement("$L.$L = $L($L.$L)", VarName.from(model), label,
                         label, VarName.from(model), label);
-            } else {
-                intoBuilder.addStatement("$L.$L = $L()", VarName.from(model), label, label);
+                } else {
+                    intoBuilder.addStatement("$L.$L = $L()", VarName.from(model), label, label);
+                }
+                intoBuilder.endControlFlow();
             }
-            intoBuilder.endControlFlow();
             // TODO throw exception in else block if @NotEmpty present
         }
 

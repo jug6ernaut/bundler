@@ -25,13 +25,19 @@ public class AnnotatedField {
     private TypeName typeName;
     private TypeHelper helper;
     private Class<?> annotation;
+    private boolean isField;
 
-    public AnnotatedField(Element element, Provider provider, Class<?> annotation) {
+    public AnnotatedField(Element element, Provider provider, Class<?> annotation, boolean isField) {
+        this(element,provider,annotation,isField,element.getSimpleName().toString(),TypeName.get(element.asType()));
+    }
+
+    public AnnotatedField(Element element, Provider provider, Class<?> annotation, boolean isField, String name, TypeName type) {
         this.provider = provider;
-
         this.annotation = annotation;
-        label = element.getSimpleName().toString();
-        typeName = TypeName.get(element.asType());
+        this.isField = isField;
+
+        label = name;
+        typeName = type;
         helper = TypeHelperFactory.getHelper(typeName, provider.elementUtils());
         checkModifiers(element);
         checkIfValidType(element);
@@ -39,7 +45,7 @@ public class AnnotatedField {
 
     private void checkModifiers(Element element) {
         Set<Modifier> modifiers = element.getModifiers();
-        if (modifiers.contains(Modifier.FINAL)
+        if ((isField() && modifiers.contains(Modifier.FINAL))
                 || modifiers.contains(Modifier.PROTECTED)
                 || modifiers.contains(Modifier.PRIVATE)
                 ) {
@@ -86,5 +92,9 @@ public class AnnotatedField {
         return FieldSpec.builder(fieldType, VarName.from(this))
                 .addModifiers(modifiers)
                 .build();
+    }
+
+    public boolean isField() {
+        return isField;
     }
 }

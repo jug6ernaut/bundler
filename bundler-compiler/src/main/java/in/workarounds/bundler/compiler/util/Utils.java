@@ -10,9 +10,12 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+
+import in.workarounds.bundler.annotations.Arg;
 
 /**
  * Created by madki on 17/10/15.
@@ -174,6 +177,15 @@ public class Utils {
             return true;
         }
         return false;
+    }
+
+    public static TypeName getTypeName(Arg arg) {
+        try {
+            return TypeName.get(arg.type());
+        }
+        catch( MirroredTypeException mte ) {
+            return TypeName.get(mte.getTypeMirror());
+        }
     }
 
 }
