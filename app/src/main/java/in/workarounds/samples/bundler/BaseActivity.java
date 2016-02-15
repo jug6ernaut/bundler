@@ -2,9 +2,11 @@ package in.workarounds.samples.bundler;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 
 import in.workarounds.bundler.annotations.Arg;
+import in.workarounds.bundler.annotations.Args;
 import in.workarounds.bundler.annotations.OptionsForBundler;
 import in.workarounds.bundler.annotations.RequireBundler;
 import in.workarounds.bundler.annotations.Required;
@@ -20,7 +22,11 @@ import in.workarounds.bundler.annotations.State;
     data = "http://www.google.com"
 )
 @OptionsForBundler(packageName = "in.workarounds")
+@Args({
+    @Arg(key = "wat", type = Parcelable.class)
+})
 public class BaseActivity extends AppCompatActivity {
+
     @Arg
     int someInt;
     @Arg @Required
