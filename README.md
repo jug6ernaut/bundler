@@ -1,6 +1,8 @@
 Bundler
 ============
 
+[![Build Status](https://travis-ci.org/workarounds/bundler.svg?branch=master)](https://travis-ci.org/workarounds/bundler)
+
 Generates broilerplate code for intent and bundle builders and parsers. Autogeneration of this code at compile time ensures type-safety.
 Here's an example of this in Action.
 
@@ -88,6 +90,9 @@ Download
 Gradle:
 ```groovy
 buildscript {
+  repositories {
+    mavenCentral()
+  }
   dependencies {
     classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
   }
@@ -95,15 +100,85 @@ buildscript {
 
 apply plugin: 'com.neenbedankt.android-apt'
 
+ext {
+  bundlerVersion = '0.1.1'
+}
+
 dependencies {
-  compile 'in.workarounds.bundler:bundler-annotations:0.0.3'
-  apt 'in.workarounds.bundler:bundler-compiler:0.0.6'
+  compile "in.workarounds.bundler:bundler-annotations:$bundlerVersion"
+  apt "in.workarounds.bundler:bundler-compiler:$bundlerVersion"
+  
+  // if using Parceler library then uncomment
+  // compile "in.workarounds.bundler:bundler-parceler:$bundlerVersion"
 }
 ```
 
 What can be an `@Arg` or `@State`?
 ----------------------------------
-The short answer is anything that can be put into a `Bundle`. All primitives, `String`, any object that implements `Parcelable`, `Serializable`, `ArrayList<Parcelable>`, `ArrayList<Object>` (as `ArrayList` implements `Serializable`) can all be annotated with `@Arg` or `@State`. Currently `List` cannot be annotated, maybe in a future release we'll internally cast it to an `ArrayList` if it's implemented that way and support it. See [#2](https://github.com/workarounds/bundler/issues/2)
+The short answer is anything that can be put into a `Bundle`. All primitives, `String`, any object that implements `Parcelable`, `Serializable`, `ArrayList<Parcelable>`, `ArrayList<Object>` (as `ArrayList` implements `Serializable`) can all be annotated with `@Arg` or `@State`.
+
+Custom Types for `@Arg` and `@State`
+------------------------------------
+If for some reason you have a type that cannot be made a `Parcelable` or it has a different mechanism to serialize data that the library is not supporting, you can define your own custom serializer for the type. Let's consider the simple example of `Date` object, it can't be put into a bundle directly, but it'd be nice if the calling code and the activity can directly use the object as `Date`
+
+```java
+@RequireBundler
+public class DemoActivity extends Activity {
+  @Arg
+  Date date;
+
+  @Override
+  public void onCreate(Bundle savedState) {
+    setContentView(R.layout.activity_demo);
+    Bundler.inject(this);
+  }
+}
+```
+The above code gives a compile error saying `Date` is an unrecognized type. To overcome this you can define your own `Serializer` that knows how to put and get a Date from a bundle. Here's a possible implementation of the serializer:
+
+```java
+/**
+ * This class must have an empty constructor which will be used to instantiate this.
+ */
+public class DateSerializer implements Serializer<Date> {
+
+  @Override
+  public void put(String key, Date value, Bundle bundle) {
+    bundle.putLong(key, value.getTime());
+  }
+
+  @Override
+  public Date get(String key, Bundle bundle) {
+    return new Date(bundle.getLong(key));
+  }
+}
+```
+Now while using `@Arg` for the `Date date` field, provide an argument to `@Arg` telling the library to use `DateSerializer` as the serializer. In the above `DemoActivity` change:
+```java
+  @Arg(serializer = DateSerializer.class)
+  Date date;
+```
+Now this activity can be started directly by passing date to it's builder as below:
+```java
+  Bundler.demoActivity(new Date(System.currentTimeMillis())).start();
+```
+
+A serializer is already included in the `bundler-annotations` package for serializing `List<? extends Parcelable>`.
+```java
+  @Arg(serializer = ParcelListSerializer.class)
+  List<Foo> foos; //where Foo implements Parcelable
+```
+
+For putting a type annotated with `@Parcel` from Parceler library add the depedency 
+```groovy
+  compile "in.workarounds.bundler:bundler-parceler:$bundlerVersion"
+```
+This artifact containes a serializer `ParcelerSerializer` use it as follows:
+
+```java
+  @Arg(serializer = ParcelerSerializer.class)
+  Dog dog; // where Dog is annotated with @Parcel
+```
 
 Additional options to `@RequireBundler`
 --------------------------------------

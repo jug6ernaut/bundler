@@ -1,20 +1,22 @@
 package in.workarounds.samples.bundler;
 
 import android.os.Bundle;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
+import android.widget.EditText;
 import android.widget.TextView;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-import in.workarounds.Bundler;
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import in.workarounds.bundler.Bundler;
 import in.workarounds.bundler.annotations.Arg;
 import in.workarounds.bundler.annotations.Args;
 import in.workarounds.bundler.annotations.RequireBundler;
 import in.workarounds.bundler.annotations.Required;
 import in.workarounds.bundler.annotations.State;
+import in.workarounds.bundler.parceler.ParcelerSerializer;
 
 /**
  * Created by madki on 29/10/15.
@@ -26,41 +28,74 @@ import in.workarounds.bundler.annotations.State;
 })
 public final class BookDetailActivity extends BaseActivity {
     private static final String TAG = "BookDetailActivity";
-    public static final int BOOK_TYPE_FICTION = 1;
-    public static final int BOOK_TYPE_NON_FICTION = 2;
-    private static final String FIRST_WAY = "firstWay";
-    private static final String SECOND_WAY = "secondWay";
-
+    private static final String KEY = "writer";
     @Arg
-    @State
-    int id;
-    @NonNull
+    Book book;
+    @Arg(serializer = ParcelerSerializer.class, key = KEY)
+    Author author;
     @Arg
-    @State
-    String book;
-    @Arg
-    @State
-    String author;
-    @Arg
-    @State
     @BookType
-    int type;
-    @Arg @Required(false)
-    int someInt;
+    int bookType;
+    @Arg
+    @Required(false)
+    @State
+    int rating;
+
+    @Bind(R.id.tv_book_name)
+    TextView tvBookName;
+    @Bind(R.id.tv_book_writer)
+    TextView tvBookWriter;
+    @Bind(R.id.tv_type)
+    TextView tvType;
+    @Bind(R.id.tv_rating)
+    TextView tvRating;
+    @Bind(R.id.et_rating)
+    EditText etRating;
+
+    BookSummaryFragment summaryFragment;
+
+    @OnClick(R.id.btn_rate)
+    void rate() {
+        String ratingStr = etRating.getText().toString();
+        if (!TextUtils.isEmpty(ratingStr)) {
+            tvRating.setText(ratingStr);
+            setRating(Integer.parseInt(ratingStr));
+        }
+    }
+
+    @OnClick(R.id.btn_toast)
+    void toast() {
+        Bundler.toastService(book, author).rating(rating).start(this);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_book_detail);
+
+        ButterKnife.bind(this);
+
         Bundler.inject(this);
+        Bundler.restoreState(this, savedInstanceState);
 
-        TextView bookName = (TextView) findViewById(R.id.tv_book_name);
-        bookName.setText(book);
+        tvBookName.setText(book.name());
+        tvBookWriter.setText(author.name);
+        tvRating.setText((rating > 0) ? Integer.toString(rating) : "unrated");
+        tvType.setText((bookType == Book.FICTION) ? "Fiction" : "Non fiction");
 
-        TextView writer = (TextView) findViewById(R.id.tv_book_writer);
-        writer.setText(author);
+        Fragment temp = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
 
-        Log.d(TAG, "book id = " + id);
+        if(temp != null) {
+            summaryFragment = (BookSummaryFragment) temp;
+        } else {
+            summaryFragment =
+                    Bundler.bookSummaryFragment(book, author, bookType, rating).create();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.fragment_container, summaryFragment)
+                    .commit();
+        }
     }
 
     @Override
@@ -75,8 +110,9 @@ public final class BookDetailActivity extends BaseActivity {
         Bundler.saveState(this, outState);
     }
 
-    @IntDef({BOOK_TYPE_FICTION, BOOK_TYPE_NON_FICTION})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface BookType {
+    private void setRating(int rating) {
+        this.rating = rating;
+        if(summaryFragment != null) summaryFragment.updateRating(rating);
     }
+
 }

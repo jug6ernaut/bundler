@@ -1,5 +1,7 @@
 package in.workarounds.bundler.compiler.model;
 
+import com.squareup.javapoet.ClassName;
+
 import javax.lang.model.element.Element;
 
 import in.workarounds.bundler.annotations.State;
@@ -10,8 +12,8 @@ import in.workarounds.bundler.compiler.Provider;
  */
 public class StateModel extends AnnotatedField {
 
-    public StateModel(Element element, Provider provider) {
-        super(element, provider, State.class, true);
+    public StateModel(Element element, Provider provider, ClassName serializer, String keyValue) {
+        super(element, provider, State.class, true, serializer, keyValue);
     }
 
 }
